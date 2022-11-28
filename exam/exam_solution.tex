@@ -200,6 +200,56 @@ code.}
 \newpage
 \sectionS{Question 3 - Malloc lab}
 \subsectionS{A. Explain in detail your implementation of the \texttt{mm\_malloc} function.}
+Lets start from heap structure. Heap consists of blocks. Each block has a header and footer.
+Header and footer are both 1 \textit{WORD} long and contains information about size of the block and
+information, if the block is allocated or free in format $(size | 0x01)$ for allocated blocks
+and $(size | 0x0)$ for free blocks. If the block is free between header and footer, there is
+information about previous and next free block. The information is address of the block.
+Each address is 1 \textit{WORD} long, so the minimal length of block is 4 \textit{WORD}s. 
+Thanks to header 
+and footer I can traverse though blocks like throufh doubly linked linked list. Information
+about previous and next free blocks creates an explicit free list. This list can be used to 
+search faster for free space, when allocating memory. \\
+Now get to memory allocation. First I ignore any request for memory of size 0 or smaller, those
+requests don't make any sense. Then I need to align block. The block should be aligned so
+their size is divisible by \textit{DWORD} (double \textit{WORD}). 
+If size is smaller than \textit{DWORD} it should take space of at least 4 \textit{WORD}s, so  
+in case this memory is freed later, I can put this space into explicit free list, where I need
+2 \textit{WORD}s for pointers to other free blocks and two more for header and footer. 
+If it is not smaller I just need to align it to be divisible by \textit{DWORD}. \\
+After alignment I have size of block I really need to allocate, including header and footer.
+Then I can go through free list. I start from first free block in the list, check its size and
+if it is enough I return the block, otherwise I take pointer to next free block, from the body
+of current free block and continue on him, until I find fitting block or I end up on the end of 
+the list. If no block was sufficient I return \textit{NULL}. \\
+{\large Case 1: I have found free block}\\
+\\
+Now I have enough space to allocate. Now I need to do two things. First I have to check, if the
+block isn't too big, so I don't waste any space. If the size that would be unused, could be 
+its own free block (is at least 4 \textit{WORD}s long), I set up header and footer of newly allocated
+block. In other words I put information about size and allocation to the header and footer.
+Then I delete this block from free list. Then I go to the end of footer of this block. I create
+new header and footer with information about this block, like size and the fact, that it's free.
+In the end I add this block to the beginnig of the free list. Otherwise I don't split anything
+and just update header and footer information, that the block is allocated and remove it from
+free list. \\
+Now the block is allocted and I can return the pointer. \\
+
+\noindent{\large Case 2: Finding free block returned \textit{NULL}}\\
+If no block is found I need to extend the heap. I either extend by heap by some constant or
+,if requested size is even bigger, by the requested size. Basically I just align the 
+number of \textit{WORD}s I need to allocate, to be even and then I call \textit{mem\_sbrk}
+to get that amount of memory, after that I just put information about size (and that the block
+is free) to the header and footer of returned memory. In the end I try to coalesce the memory.
+Because this block was added to the end of the heap, only two coalescing cases can happen, out
+of 4 described in the book. Either the block of memory at the end of heap before extension
+was free, then I join these two blocks, remove end block of heap before extension from free
+list and add newly created block to the free list. Or the other case, the last block 
+was full, so I just add this new block to the free list and no joining is happening.
+\\ 
+After this I have free block big enough to contain requested memory, so I do same process as
+described before, about placing information to the header and potencial splitting of new block.
+
 \subsectionS{B. What is pointer arithmetic? Describe how you use it in your version of mm.c}
 
 \newpage
