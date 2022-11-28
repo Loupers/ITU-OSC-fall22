@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./hex2raw < at | ./ctarget -q

