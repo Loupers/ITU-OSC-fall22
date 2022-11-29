@@ -400,11 +400,34 @@ of normal block.
 \sectionS{Question 4 - Topics from the class}
 \subsectionS{A. What is the difference between traps, faults 
 and aborts in the context of interrupts?}
+
 \subsectionS{B. What is the difference between an ephemeral 
 and a well-known port? Give examples of
 when either is used.} 
+
+When two computers want to communicate with each other they need to know, where the data should flow.
+Each computer on the network is identified by its IP address, that is how the connection between
+those computers is made. Modern computer however maybe needs to create more communication channels.
+To distinguish those channels, the ports are used. Ports can be either physical or software 
+implemented. If it is physical it's a hole for a cable to be put in. Software implemented is software
+that with packet takes a number of port and packets going to the same port resolves together. \\
+Well-known port is a number of port, that is taken by some application. The application basically
+owns that port number and noone else can use it. This port is allocated for the application and 
+clients can be sure, that this application will run on that port and won't suddenly change.
+This is usefull when we want for someone 
+to be able to connect to my computer, for example to use some server running on it. Example of this
+application can be either email protocols (smtp, pop3 etc.) or hypertext tranfer protocol (http) for
+tranfering document, that are used as websites. \\
+Ephemeral ports are ports, that are created to serve some purpose and deleted afterwards. This is 
+used usually if client want to connect to some server with well-known port. Client gets assigned 
+some ephemeral port by kernel. Then clients does its bussiness with server and when the 
+connection is no longer neede, client releases the port. \\
+The difference is that well-known ports are stable and represents one specific service and ephemeral
+ports are short-lived and noone can be sure, which application is behind that port.
+
 \subsectionS{C. What is a memory leak? When does it occur? 
 What can you do to avoid it?} 
+
 \subsectionS{D. What is a race-condition? Why is a race-condition hard 
 to debug? Which instructions can
 you use to avoid race-conditions? 
