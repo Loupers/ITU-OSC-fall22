@@ -283,51 +283,59 @@ int tmin(void) {
 assembly instruction is executed? Does
 anything in the stack change? }
 
-Just shortly stack is a virtual memory data structure, that holds data for called functions.
-Whenever procedure is called, the return address is pushed to the top of the stack and then
-it allocates memory for that procedure (like variables and procedure parameters). Next to stack
-there is a register called stack pointer. That is an address on stack, where the current running
+Just shortly,the call stack is a virtual memory data structure that holds data for procedures, 
+that has been called.
+Whenever a procedure is called, the return address is pushed to the top of the stack and then
+it allocates a memory for the procedure (like variables and procedure parameters). Next to the stack
+there is a register called stack pointer. That is an address on the stack, where the current running
 programm is. \\
-When the c3 ret is called, there should be return address present on the stack. The programs 
-stack pointer points on to the point in memory where return address is. Ret pops the address
-out of the stack and stores it into instruction pointer register. Poping something 
-from the stack is equivalent of incrementing of the stack pointer. The return address is location
-of next programm instruction, that should be executed after finishing the procedure. After the pop
+When the c3 ret is executed, there should already be a return address present on the stack. 
+The programs 
+stack pointer points to the point in the memory where the return address is. Ret pops the address
+out of the stack and stores it in the instruction pointer register. Poping something 
+from the stack is equivalent to incrementing the stack pointer. The return address is location
+of the next program instruction, that should be executed after finishing the procedure. After the pop
 the return address and other procedure parameters won't be on stack anymore $\rightarrow$
 the stack memory of that function will be deallocated.
 \subsectionS{B. What is a gadget farm? Describe an
 example of how you use one in your
 code.}
 
-The computer can't read the human code, it needs to be translated into machine code. Machine
-code is basically sequence of bytes, that can be executed by computer. Every instruction
-can be encoded to the machine code. When we write some procedure, the whole thing get encoded
-into sequence of bytes, encoding instructions we want to execute. 
-Each byte is stored somewhere and has its own address. When we are executing code,
-there is a register instruction pointer (further called IP), which points to current instruction
+The computer can't read the human code, it needs to be translated to the machine code. Machine
+code is basically a sequence of bytes, that can be executed by a computer. Every instruction
+can be encoded to the machine code. When we write some procedure, the whole thing gets encoded
+to a sequence of bytes, encoding instructions we want it to execute. 
+Each byte is stored somewhere in the memory and has its own address. When we are executing a code,
+there is a register instruction pointer, which points to current instruction
 we want to execute. \\
-Gadget is sequence of bytes encoding some instructions, ended by $0xc3$, which encodes ret
-instruction. When we have a block of memory, that contains multiple of functions and their  
-instructions. If in that block of memory are some gadgets we call that block of memory gadget farm.
+Gadget is a sequence of bytes encoding some instructions, ended by $0xc3$, which encodes the ret
+instruction. When we have a block of some memory, that contains multiple functions and their  
+instructions. If in the block of the memory are some gadgets we call that block of memory a 
+gadget farm.
 \\
 We don't need to call the whole function when using gadgets. We can just set the instruction
-pointer to the address of the gadget, which we want to use. After executing instructions 
-of the gadget, the ret function is called and as stated earlier, sets instruction pointer
+pointer to the address of the gadget, that we want to use. After executing instructions 
+of the gadget, the ret function is called and sets the instruction pointer
 to the address poped from the stack. This is usefull for us, when we want to use return oriented
-programming to attack someone computer.  \\
+programming to attack someones computer.  \\
 Return oriented programming is a technique, when we overflow stack with addresses of gadgets 
 we want to execute. \\
-Shortly on stack overflow. Some functions in C have problems, when reading input from user.
-If they store input on stack and don't check the length of input, the input can be longer
-than allocated space for it. Than it is stored closer to the bottom of the stack, overwriting
-it. We can use this to overwrite return addresses or insert some code we want to execute onto stack.
+Some functions in C have problems, when reading input from the user.
+If they store the input on the stack and don't check the length of the input, the stored input can 
+be longer
+than the allocated space for it. Than it will be stored closer to the bottom of the stack, overwriting
+already stored data on it. We can use this to overwrite return addresses or insert some code 
+we want to execute on the stack. This is called stack overflow.
 \\
-When we are using return oriented programming, we overflow stack and store addresses of all gadgets
-from gadget farm we want to use. Important part is to overwrite the current return address to 
-address of first byte of the first gadget we want to use. Then when the programm continues, it 
-executes first gadget after return. Because the gadget is ended with $0xc3$ instruction it looks
-into stack and takes next return address and goes to that place, executing another gadget if there 
-is one and so on.
+When we are using return oriented programming, we overflow the stack and store addresses 
+of all gadgets
+from the gadget farm we want to use. Important part is to overwrite the current return address to 
+the address of the first byte of the the first gadget we want to use. 
+Then when the program continues, it 
+executes the first gadget after return. Because the gadget ends with $0xc3$ instruction it looks
+into the stack, takes the next return addres and saves it in the instruction pointer. 
+Instruction pointer then executes the code of the next gadget and the process repeats, as long
+there are valid instruction addresses on the stack.
 
 \newpage
 \sectionS{Question 3 - Malloc lab}
