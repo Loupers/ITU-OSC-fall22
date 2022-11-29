@@ -258,7 +258,7 @@ left shift ($<<$) operator in C, which moves bits to the left, direction to high
 copies their value to the old place. So if I do $0x80 << 0x01$, shift 8 bits set to one to the
 left by one place, I get 9 bits all set to one, if it doesn't overflow. Integer has 32 bit, so
 to get them all set to one I just need to shift $0x80$ by $0x18$ (24) places. This gives me
-integer with all bits set to one -> smallest number, that fits into integer.
+integer with all bits set to one $\rightarrow$ smallest number, that fits into integer.
 
 \begin{lstlisting}
 int tmin(void) {
@@ -401,6 +401,8 @@ of normal block.
 \subsectionS{A. What is the difference between traps, faults 
 and aborts in the context of interrupts?}
 
+
+
 \subsectionS{B. What is the difference between an ephemeral 
 and a well-known port? Give examples of
 when either is used.} 
@@ -428,10 +430,52 @@ ports are short-lived and noone can be sure, which application is behind that po
 \subsectionS{C. What is a memory leak? When does it occur? 
 What can you do to avoid it?} 
 
+Memory leak is a problem of leaving allocated memory on heap, that will never be used again. 
+Usually this happens, when programmer allocates some memory in function and then returns from 
+it without freeing the memory or returning the pointer. In that case there will be allocated
+memory, to which he lost pointer, so he can't free it. If this happens repeatedly, the memory
+slowly fills up with the unfreed memory and in the worst case the whole computer runs
+out of memory. This is really for applications, that should run all the time and never quit, like
+servers. \\
+To prevent this we (as programmers) always have to free allocated memory. 
+\footnote{Or use language with garbage collector, that frees the memory for us, but I guess
+this wasn't entirely point of this class}
+
 \subsectionS{D. What is a race-condition? Why is a race-condition hard 
 to debug? Which instructions can
 you use to avoid race-conditions? 
 Why are these instructions expensive?} 
+
+Race condition is situation, when there are multiple threads running and one thread
+depends on executing some instructions sooner than the other threads. For example 
+one thread needs to read some variable, before other thread writes into it. The result
+depends on who reaches the instruction first. \\
+This is problem, when debugging. In theory this bug can occur only once and never be replicated
+again. Or what is maybe worse, if there is multiple threads reaching same variable,
+there will be multiple different outcomes each time, the program runs.\footnote{Not 
+each time, because the number of outcomes is finite, so if we run it enough times
+it will return the same result at some point.}
+This makes it really hard to debug (not being able to replicate error). If some thread 
+reaches desired variable first depends on, how the operating system schedules threads. \\
+To prevent race-condition it's necessary to allow exclusive access to the part of code,
+where the race-condition occurs. For this there is a semaphore. Basically it is just
+one global variable, that is used by thread to communicate, if they can continue (go
+though crossroad) or not. Before the thread reaches the critical part of the code,
+we can let it waiting for getting access from semaphor. If the thread reaches this part
+of code, it decrements the value of semaphore (the value is non-negative) and constantly
+checks the variable until it is non-zero. If the variable is non-zero, it means green light
+for thread, so it can access the critical section and proccess it. When leaving critical section 
+thread increments value of semaphor variable, to give signal to other threads, saying that next 
+one can access the critical section. But to be precise there is no rule saying, that this
+variable has to be incremented by the same thread that is accessing critical area. The threads
+waiting are waiting for signal for any other thread, not necessary the last one, that has accessed
+the critical section. If we don't want this behaviour, there is a special type of sempahore called
+mutex (mutual exclusion), where one thread gets access to shared resource and only that thread
+can release it. Meaning other threads are waiting for the thread having the resource to tell
+them, that it's ok to go.
+\\
+While waiting thread actively checks the variable every time it gets the chance. This 
+requires some computational power and is a reason, why it is so expensive.
 
 
 %----------------------------------------------------------------------------------------
