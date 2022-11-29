@@ -123,29 +123,31 @@
 
 \sectionS{Question 1 - Data lab}
 \subsectionS{A. Describe your implementation of \textit{howManyBits(x)}}
-The easiest solution for this would be create mask, that isolates each bit of the number,
-then take that bit and use the \textit{!} twice (\textit{!!}. Single \textit{!} gives 
-1 if the number is only full of zeros, which would be if the bit, for which the mask was created
+The easiest solution for this would be to create a mask, that isolates each bit of the number,
+then takes that bit and uses the \textit{!} twice (\textit{!!}). Single \textit{!} gives 
+1 if the number is only full of zeros, which would be if the bit, for which the mask was created, 
 was set to 0. So for counting them I need to negate the value again, so I would get 
-0 in this case and 1 otherwise. Then I can just sum those numbers together with \textit{+}
+0 in this case and 1 otherwise. Then I can add those numbers together with the \textit{+}
 operator. \\
 This solution is easy, but takes a lot of operations, so I needed to be smarter. \\
-Let's start from broader perspective. If I want to represent the number in the twos complement
-I'll always need one bit to basically say if the number is positive or negative (MSB). 
-And what with the rest of the number. \\
-Now lets think little bit more how twos complement works. If I have some number represented in
-twos complement, then first bit of the number is giving the value we need to subtract
-from the value stored in the next $x-1$ bits. Lets say I have two numbers $x$ and its absolute
-value $y = |x|$. If $x$ is positive, then $y = x$ and for representing $x$ as twos complement.
-I just need as much bits as is the highest position of bit set to one (e.g. $x = 7 = 0b111$ I need
-3 bits), plus 1 as the leading 0 for MSB. \\
-Lets think about case when $x$ is negative. Then I know the MSB is set to one, and the rest
+Let's start from a broader perspective. If I want to represent the number in the twos complement
+I will always need one bit to say if the number is positive or negative (MSB). \\
+And regarding the rest of the number, 
+let's think a little bit more about how the twos complement works. If I have some number 
+represented in
+a twos complement, then the first bit of the number is giving the value we need to subtract
+from the value stored in the next $x-1$ bits. Let's say I have two numbers $x$ and its absolute
+value $y = |x|$. If $x$ is positive, then $y = x$ and for representing $x$ as twos complement
+I just need as many bits as the highest position of a bit, that is set to 1 
+(e.g. $x = 7 = 0b111$ I need 3 bits), plus 1 as the leading 0 for the MSB. \\
+Let's think about a case when $x$ is negative. Then I know the MSB is set to 1, and the rest
 of the number tells me, how much I have to subtract from $2^{position\_of\_MSB}$. Neat thing 
-about twos complement is this thing tho, if I have some negative value $x$, the positive value
-of $-x$ is also representable as twos complement, except for $0b10000\cdots$, where there are only
-zeros after MSB one. What if I just add one to the negative number? \\
-I will state this $\rightarrow$ if I increment negative number of twos complement by one, it will still
-need same amount of bits for representation as the old one. 
+about the twos complement is this thing though, if I have some negative value $x$, the positive value
+of $-x$ is also representable in the twos complement, except for $0b10000\cdots$, where there are only
+zeros after MSB, that is set to 1. What if I just add 1 to the negative number? \\
+I will state this $\rightarrow$ if I increment a negative number that is represented in the 
+twos complement by 1, it will still
+need the same amount of bits to be represented as the old one. 
 \begin{itemize}
   \item{$-8 + 1 = -7$ and $-8 = 0b1000$; $-7 = 0b1001$}
   \item{$-3 + 1 = -2$ and $-3 = 0b101$; $-2 = 0b110$} 
@@ -153,47 +155,53 @@ need same amount of bits for representation as the old one.
 \end{itemize}
 
 \noindent This way I can just get the value of $x + 1$ and compute how many bits I need for the absolute
-value $|x + 1|$ (x is still negative). How to easily get this value? Twos complement
-is really nice to me. If I want value of $-x$ all I need to negate all bits and add 1.
+value $|x + 1|$ (x is still negative). How to easily get this value? The twos complement
+makes this really simple. If I want the value of $-x$ all I need to do is negate all bits and add 1.
 But what I want is $(~x + 1) - 1 = ~x$. \\
 
-\noindent So now I just need to get the absolute value of $x$ and compute the position of first bit, that
-is set to one. Lets split it this into two parts. \\
+\noindent So now I just need to get the absolute value of $x$ and compute the position 
+of the first bit, that
+is set to 1. Lets split this into two parts. \\
 
-\noindent{\large{Getting absolute value}} \\
+\noindent{\large{Getting the absolute value}} \\
 
 \noindent First I need to know if the number is negative or positive. If $x$ is positive I want to 
-get $x$, otherwise I want to get $~x$. First I isolate MSB with mask of $0x80 << 0x18$ (minimal number
-explained more in next subquestion). Then I can reuse code of conditional function (one of the other
-tasks). Conditional would be if $x$ after mask is 0 or not. If it is 0, the $x$ was positive, negative
-otherwise. Then I can flip the condition, negate it and add 1. This way I will either get integer
-consisting of all ones or all zeros. In the end I just use this condition as mask for $x$ or $~x$ 
-and pick the desired one. One of them will be turned to all zeros, other will remain the same.
-So I can just use $|$ to get $x$ I want. Now I have aquired the requested value. \\
+get $x$, otherwise I want to get $\sim x$. 
+First I isolate the MSB with a mask of $0x80 << 0x18$ (minimal number
+explained more in next subquestion). Then I can reuse the code from the conditional function 
+(one of the other
+tasks). Condition would be true if $x$ after mask is 0 or not. 
+If it is 0 the $x$ was positive, negative
+otherwise. Then I can flip the condition, negate it and add 1. This way I will either get an integer
+consisting of all 1s or all 0s. In the end I just use this condition as a mask for $x$ or $\sim x$ 
+and pick the desired one. One of them will be turned to all zeros, the other will remain the same.
+So I can just use the $|$ operator to get the value I want. Now I have aquired the requested value. \\
  
-\noindent{\large{Computing number of bits}} \\
+\noindent{\large{Computing the number of bits}} \\
 
-\noindent Now when I have the positive value all I need to do is to get position of first 1. 
-First a copy the first bit to the right of it, in $\log_{2}(32)$ steps. Starting from one
-I shift all bits to the right by one and take $x | (x >> 0x01)$. This copies the most left one
+\noindent Now when I have the positive value all I need to do is to get the position of the first 1. 
+First I need is to have 1s on every position after the first 1, that was found. 
+I can achieve than in $\log_{2}(32)$ steps. Starting from 1
+I shift all bits to the right by $0x01$ and take the value of $x | (x >> 0x01)$. 
+This copies the most left one
 to the next bit. Then I do the same but with $0x02$, that copies the leftest one and its copy from
-last step to the next two bits. Then with $0x04$ and so on. \\
-\noindent know I have copied the leftest one and I need to count how many bits I have in number.
-This either can be slow or I can use divide and conquer technique. Each bit has information how
-many ones are in him (one if set to one, zero if set to zero). Now what I do is to align bits, that
-I want to add and use mask to separete odd and even bits. In other words I move even bits under
-odd bits and add them together. Now I know how many bits are in the two consecutive bits. Then
-I do the same for the pairs of bits. Align (shift by two this time) and mask them (I need
-a different mask. First mask needed to mask even bits $\rightarrow 0b0101010101\cdots = 0x55555555$,
+last step to the next two bits. Then with $0x04$ and so on, until I have copied it to the LSB.  \\
+\noindent Now I have copied the leftest 1 and I need to count how many bits I have set in the number.
+I can either do it slowly or I can use divide and conquer technique. Each bit has information how
+many 1s are in him (one if set to 1, zero if set to 0). Now what I do is to align bits, that
+I want to add and use mask to separate odd and even bits. In other words I move even bits under
+odd bits and add them together. Now I know how many bits are in the pairs of the consecutive bits. 
+Then I do the same for the pairs of bits. Align (shift by two this time) and mask them (I need
+a different mask. First mask I needed to mask even bits $\rightarrow 0b0101010101\cdots = 0x55555555$,
 this needs to mask even pairs $\rightarrow 0b00110011\cdots = 0x33333333$.
-Next for the pairs of four bits, 8bits and in the end 16bits. But because I didn't wanted to use
-more mask than necessary, my code could have left some bits set in first part of the number. 
-So I needed to mask the remaining bits, so it wouldn't return bigger numbers than $32$ (maximal
-amount of ones in integer).
+Next for the pairs of 4 bits, 8 bits and in the end 16 bits. But because I didn't wanted to use
+more masks than necessary, my code could have left some bits set in the first part of the number. 
+I needed to mask the remaining bits, so it wouldn't return bigger numbers than $32$ (maximal
+amount of 1s in an integer).
 \\
 
-\noindent In the end only thing I need is to add the 1 bit, that I have not acounted for earlier 
-(the MSB of twos complement, saying if it is negative or positive)  \\
+\noindent In the end the only thing I need is to add the 1 bit, that I have not acounted for earlier 
+(the MSB of twos complement, saying if it is negative or positive).  \\
 
 \newpage
 
@@ -250,15 +258,18 @@ int howManyBits(int x) {
 
 
 \subsectionS{B. Describe your implementation of \textit{tmin(void)}}
-From definition of twos complement. the minimal number is composed of bits, where 
-each bit is set to one. \\
-The function should return minimal integer, so that means I need 32 bits, all set to one.
-Largest number I can use, which has all bits set is $0x80$ ($-128$). Then I can use the
-left shift ($<<$) operator in C, which moves bits to the left, direction to highest bit, and 
-copies their value to the old place. So if I do $0x80 << 0x01$, shift 8 bits set to one to the
-left by one place, I get 9 bits all set to one, if it doesn't overflow. Integer has 32 bit, so
-to get them all set to one I just need to shift $0x80$ by $0x18$ (24) places. This gives me
-integer with all bits set to one $\rightarrow$ smallest number, that fits into integer.
+From definition of the twos complement, the minimal number is composed of bits, where 
+the MSB is set to 1 and all other bits are set to 0. \\
+The function should return minimal integer, so that means I need 32 bits.
+The longest minimal number I can use is $0x80$ ($-128$). Then I can use the
+left shift ($<<$) operator in C, which moves bits to the left, direction to MSB, and 
+the places, where the original number was shifted from, will be set to 0. 
+So if I do $0x80 << 0x01$, it shifts 8 bits to the 
+left by one place. I get 9 bits, first set to 1, others to 0, if it doesn't overflow. 
+Integer has 32 bit, so
+to get them all set the way I want, I just need to shift $0x80$ by $0x18$ (24) places. This gives me
+the integer with MSB set to one and all other bits set to 0 $\rightarrow$ smallest number, 
+that fits into an integer.
 
 \begin{lstlisting}
 int tmin(void) {
@@ -490,6 +501,5 @@ While waiting thread actively checks the variable every time it gets the chance.
 requires some computational power and is a reason, why it is so expensive.
 
 
-%----------------------------------------------------------------------------------------
 \end{document}
 
