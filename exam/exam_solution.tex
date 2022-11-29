@@ -271,9 +271,24 @@ int tmin(void) {
 \subsectionS{A. What happens when the c3 (ret)
 assembly instruction is executed? Does
 anything in the stack change? }
+
+Just shortly stack is a virtual memory data structure, that holds data for called functions.
+Whenever procedure is called, the return address is pushed to the top of the stack and then
+it allocates memory for that procedure (like variables and procedure parameters). Next to stack
+there is a register called stack pointer. That is an address on stack, where the current running
+programm is. \\
+When the c3 ret is called, there should be return address present on the stack. The programs 
+stack pointer points on to the point in memory where return address is. Ret pops the address
+out of the stack and stores it into instruction pointer register. Poping something 
+from the stack is equivalent of incrementing of the stack pointer. The return address is location
+of next programm instruction, that should be executed after finishing the procedure. After the pop
+the return address and other procedure parameters won't be on stack anymore $\rightarrow$
+the stack memory of that function will be deallocated.
 \subsectionS{B. What is a gadget farm? Describe an
 example of how you use one in your
 code.}
+
+
 
 \newpage
 \sectionS{Question 3 - Malloc lab}
