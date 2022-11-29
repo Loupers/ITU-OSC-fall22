@@ -39,7 +39,7 @@
 
 \begin{titlepage} % Suppresses displaying the page number on the title page and the subsequent page counts as page 1
 	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for horizontal lines, change thickness here
-	
+
 	\center % Centre everything on the page
 	
 	%------------------------------------------------
@@ -251,6 +251,29 @@ After this I have free block big enough to contain requested memory, so I do sam
 described before, about placing information to the header and potencial splitting of new block.
 
 \subsectionS{B. What is pointer arithmetic? Describe how you use it in your version of mm.c}
+
+When using arithmetic operations on pointers in C, the value of result scales based on 
+type of the pointer. For example, let me have an array of integer and a pointer to the beginning
+of the array $int *x$. Just to have it easy let starting address of  an array be equal to zero
+$int* x = 0$. Normaly if I used arithmetic operation like $x++$, the result would be $1$. 
+But because $x$ is a pointer to some integer, which has size of \textit{4 bytes}, it will
+return result scaled to the size of integer $x++ == x + sizeof(int) == 4$, which is address of
+next integer in array. \\
+For any type the expresion $pointer_to_type_t + x$ will be expanded to 
+$pointer_to_type + (x * sizeof(type_t))$. \\
+
+\noindent{\large Use of pointer arithmetic in mm.c}
+Not sure if in my case was this the use or more of a problem I needed to avoid (maybe both).
+When moving through list of blocks I needed to look into header. I had pointer to the beginning
+of the block, but header was one \textit{WORD} behind. So I needed to change type of pointer to
+char ($sizeof(char) = 1B$, so I could change the address by exactly one \textit{WORD} and not by
+$WORD * sizeof(typeOfPointer)$. This also applies for going to next/previous blocks in the list, 
+when I need to compute the next pointer from size allocated in the header and don't want to
+multiply it by data type. Other important use is in explicit free list I have, when I need
+the address of the next or previous free block, same thing applies as for header and footer
+of normal block.
+
+
 
 \newpage
 \sectionS{Question 4 - Topics from the class}
