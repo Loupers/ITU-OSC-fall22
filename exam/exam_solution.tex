@@ -401,7 +401,19 @@ of normal block.
 \subsectionS{A. What is the difference between traps, faults 
 and aborts in the context of interrupts?}
 
-
+From those three exception classes traps are most similiar to interrupts, especially when it 
+comes to handling them. When trap occures, the trap handler is called and after handling the trap,
+the running of the program resumes by going to the next instruction in order. Traps happens,
+when something is wrong with call to the system function. That's different from interrupts, they
+occur, when there's something wrong with external devices. The aborts are errors, from which 
+the program can't recover. Interrupts takes control from the application and then returns it
+to the next instruction. Abort doesn't return control back to application, but shuts it down.
+When fault happens, there is possibility, that user won't notice it, same as interrupt. 
+Interrupts are handled in the way, the programm doesn't notice, they happened. When fault
+comes, the fault handler tries to recover from it, which might be possible. If the recovery
+is successful, fault handler returns to the current instruction of the program and executes
+it again. But if there
+was no way, to recover, fault handler acts more similar to abort than interrupt.
 
 \subsectionS{B. What is the difference between an ephemeral 
 and a well-known port? Give examples of
