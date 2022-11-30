@@ -308,7 +308,8 @@ to a sequence of bytes, encoding instructions we want it to execute.
 Each byte is stored somewhere in the memory and has its own address. When we are executing a code,
 there is a register instruction pointer, which points to current instruction
 we want to execute. \\
-Gadget is a sequence of bytes encoding some instructions, ended by $0xc3$, which encodes the ret
+Gadget is a sequence of bytes encoding some instructions. The last byte of the gadget
+has to be $0xc3$ byte, which encodes the ret
 instruction. When we have a block of some memory, that contains multiple functions and their  
 instructions. If in the block of the memory are some gadgets we call that block of memory a 
 gadget farm.
@@ -332,7 +333,7 @@ of all gadgets
 from the gadget farm we want to use. Important part is to overwrite the current return address to 
 the address of the first byte of the the first gadget we want to use. 
 Then when the program continues, it 
-executes the first gadget after return. Because the gadget ends with $0xc3$ instruction it looks
+executes the first gadget after return. Because the gadget ends with the $0xc3$ instruction, it looks
 into the stack, takes the next return addres and saves it in the instruction pointer. 
 Instruction pointer then executes the code of the next gadget and the process repeats, as long
 there are valid instruction addresses on the stack.
@@ -340,80 +341,106 @@ there are valid instruction addresses on the stack.
 \newpage
 \sectionS{Question 3 - Malloc lab}
 \subsectionS{A. Explain in detail your implementation of the \texttt{mm\_malloc} function.}
-Lets start from heap structure. Heap consists of blocks. Each block has a header and footer.
+Lets start from the heap structure. The Heap consists of blocks. Each block has a header and a footer.
 Header and footer are both 1 \textit{WORD} long and contains information about size of the block and
-information, if the block is allocated or free in format $(size | 0x01)$ for allocated blocks
+information, if the block is allocated or free. 
+That information is stored in format $(size | 0x01)$ for allocated blocks
 and $(size | 0x0)$ for free blocks. If the block is free between header and footer, there is
 information about previous and next free block. The information is address of the block.
 Each address is 1 \textit{WORD} long, so the minimal length of block is 4 \textit{WORD}s. 
-Thanks to header 
-and footer I can traverse though blocks like throufh doubly linked linked list. Information
+Thanks to the header 
+and the footer I can traverse blocks like a doubly linked linked list. Information
 about previous and next free blocks creates an explicit free list. This list can be used to 
-search faster for free space, when allocating memory. \\
-Now get to memory allocation. First I ignore any request for memory of size 0 or smaller, those
-requests don't make any sense. Then I need to align block. The block should be aligned so
-their size is divisible by \textit{DWORD} (double \textit{WORD}). 
-If size is smaller than \textit{DWORD} it should take space of at least 4 \textit{WORD}s, so  
-in case this memory is freed later, I can put this space into explicit free list, where I need
-2 \textit{WORD}s for pointers to other free blocks and two more for header and footer. 
-If it is not smaller I just need to align it to be divisible by \textit{DWORD}. \\
-After alignment I have size of block I really need to allocate, including header and footer.
-Then I can go through free list. I start from first free block in the list, check its size and
-if it is enough I return the block, otherwise I take pointer to next free block, from the body
-of current free block and continue on him, until I find fitting block or I end up on the end of 
-the list. If no block was sufficient I return \textit{NULL}. \\
+search faster for free space, when allocating memory, because we don't need to check all blocks,
+but just the free ones.\\
+Now to the memory allocation. First I ignore any nonpositive request for a memory, those
+requests don't make any sense. In that case I return \textit{NULL} pointer. 
+Then I need to align the size of the block. The block should be aligned so
+its size is divisible by \textit{DWORD} ($2 * WORD$). 
+If the size is smaller than \textit{DWORD} it should take space of at least 4 \textit{WORD}s. 
+That means, that In case this memory is freed later, I can put this space in the explicit 
+free list, where I need
+2 \textit{WORD}s for pointers to other free blocks and two more for the header and the footer. 
+If the size is not smaller I just need to align it to be divisible by \textit{DWORD}. \\
+After the alignment I have the size of the block I really need to allocate, 
+including size for a header and a footer.
+I have created a function, that help me go through the free list to find some satisfying block. 
+I start from 
+the first free block in the list, check its size and
+if it is enough I return the block, otherwise I take the pointer to the next free block, 
+from the body of the current free block and continue on him, until I find a fitting block 
+or I end up on the end of the list. If there wasn't any sufficient block I return \textit{NULL}
+from the function. \\
 {\large Case 1: I have found free block}\\
 \\
-Now I have enough space to allocate. Now I need to do two things. First I have to check, if the
-block isn't too big, so I don't waste any space. If the size that would be unused, could be 
-its own free block (is at least 4 \textit{WORD}s long), I set up header and footer of newly allocated
-block. In other words I put information about size and allocation to the header and footer.
-Then I delete this block from free list. Then I go to the end of footer of this block. I create
-new header and footer with information about this block, like size and the fact, that it's free.
-In the end I add this block to the beginnig of the free list. Otherwise I don't split anything
+After finding enough space for allocation, I need to do two things. First I have to check, if the
+block isn't too big, because I don't want to waste any space. 
+If the unused size could be 
+its own free block (is at least 4 \textit{WORD}s long), I set up the header and the footer 
+of the newly allocated
+block to contain its size and information about being allocted. 
+Then I delete this block from the explicit free list. 
+Now I go to the end of the footer of this block. I create
+a new header and footer with information about this block, like size and the fact, that it's free.
+In the end I add this block to the beginnig of the explicit free list. 
+If the unused size of the block would be enough, I don't split anything
 and just update header and footer information, that the block is allocated and remove it from
-free list. \\
-Now the block is allocted and I can return the pointer. \\
+the explicit free list. \\
+Now the block is allocted and I can return the pointer to it. \\
 
 \noindent{\large Case 2: Finding free block returned \textit{NULL}}\\
-If no block is found I need to extend the heap. I either extend by heap by some constant or
-,if requested size is even bigger, by the requested size. Basically I just align the 
-number of \textit{WORD}s I need to allocate, to be even and then I call \textit{mem\_sbrk}
-to get that amount of memory, after that I just put information about size (and that the block
-is free) to the header and footer of returned memory. In the end I try to coalesce the memory.
-Because this block was added to the end of the heap, only two coalescing cases can happen, out
-of 4 described in the book. Either the block of memory at the end of heap before extension
-was free, then I join these two blocks, remove end block of heap before extension from free
-list and add newly created block to the free list. Or the other case, the last block 
-was full, so I just add this new block to the free list and no joining is happening.
+If no free block is found I need to extend the heap. I either extend by heap by some constant or
+if requested size is even bigger than that constant by the requested size. Because the supporting 
+function for heap extension requires number of \textit{WORD}, I will have to work 
+with $size \ WORD_SIZE$. 
+For extending I need to align the 
+number of \textit{WORD}s I am allocating to be even and then I call provided function 
+\textit{mem\_sbrk}
+to extend the heap by that amount of \textit{WORD}s. After that I put information 
+about size (and that the block
+is free) to the header and footer of the returned memory. In the end I try to coalesce the memory.
+Because this block was added to the end of the heap, only two out of four coalescing cases can happen.
+Either the block of the memory at the end of the heap before extension
+was free, then I have to join these two blocks. First I need to check the header of the last 
+block on the heap to see, if the block is free. If it is not free, I just need to add the  
+new block to the free list (the block, that was returned by \textit{mem\_sbrk}).
+If the block was free, first thing I need to do is remove that block from the free list.
+Then I need to update the size of the block, that will be created, to sum of sizes of those
+two blocks. I put information about size and being free to the header of the last block on the heap
+and to the footer of the new block returned by \textit{mem\_sbrk}. Then I add this new joined
+block to the explicit free list and that's it.
 \\ 
-After this I have free block big enough to contain requested memory, so I do same process as
+After this I have a free block big enough to contain the requested memory, so I do same process as
 described before, about placing information to the header and potencial splitting of new block.
 
 \subsectionS{B. What is pointer arithmetic? Describe how you use it in your version of mm.c}
 
-When using arithmetic operations on pointers in C, the value of result scales based on 
-type of the pointer. For example, let me have an array of integer and a pointer to the beginning
-of the array $int *x$. Just to have it easy let starting address of  an array be equal to zero
-$int* x = 0$. Normaly if I used arithmetic operation like $x++$, the result would be $1$. 
-But because $x$ is a pointer to some integer, which has size of \textit{4 bytes}, it will
-return result scaled to the size of integer $x++ == x + sizeof(int) == 4$, which is address of
-next integer in array. \\
-For any type the expresion $pointer_to_type_t + x$ will be expanded to 
-$pointer_to_type + (x * sizeof(type_t))$. \\
+When using arithmetic operations on pointers in C, the value of the result scales based on the
+type of the pointer. For example, let me have an array of integers and a pointer to the beginning
+of the array $int *x$. Just to have it easy let starting address of the array be equal to zero
+$int* x = 0$. Normaly if I used arithmetic operation like $x++$ for x being normal integer, 
+the result would be $1$. 
+But because $x$ is a pointer to an integer, which has a size of \textit{4 bytes}, it will
+return result scaled to the size of an integer $x++ == x + sizeof(int) == 4$, which is the address of
+the next integer in the array. \\
+For any type the expresion $pointer\_to\_type\_t + x$ will be expanded to 
+$pointer\_to\_type\_t + (x * sizeof(type\_t))$. \\
 
-\noindent{\large Use of pointer arithmetic in mm.c}
-Not sure if in my case was this the use or more of a problem I needed to avoid (maybe both).
-When moving through list of blocks I needed to look into header. I had pointer to the beginning
-of the block, but header was one \textit{WORD} behind. So I needed to change type of pointer to
-char ($sizeof(char) = 1B$, so I could change the address by exactly one \textit{WORD} and not by
-$WORD * sizeof(typeOfPointer)$. This also applies for going to next/previous blocks in the list, 
-when I need to compute the next pointer from size allocated in the header and don't want to
-multiply it by data type. Other important use is in explicit free list I have, when I need
-the address of the next or previous free block, same thing applies as for header and footer
-of normal block.
-
-\newpage
+\noindent{\large Use of the pointer arithmetic in mm.c}
+Not sure if in my case was the pointer arithmetic usefull or more of a problem 
+I needed to avoid (maybe both).
+When moving through a list of blocks I needed to look into the header of the block. 
+I had the pointer to the beginning
+of the block, but the header was one \textit{WORD} behind. So I needed to change 
+the type of the pointer to
+a char ($sizeof(char) = 1B$, so I could change the address by exactly one \textit{WORD} and not by
+$WORD * sizeof(typeOfPointer)$. If I haven't done that and the pointer I got was of a type of
+the integer, I would have skipped the header and looked somewhere into the memory of the previous
+block. I also needed to think about this when going to the next/previous blocks 
+in the explicit free list, 
+when I needed to compute the next pointer from the size located in the header and didn't want to
+multiply it by the pointer type. Other important use is in the explicit free list. When I need
+the address of the next or previous free block, the same problem as described above applies here.
 
 \newpage
 \sectionS{Question 4 - Topics from the class}
