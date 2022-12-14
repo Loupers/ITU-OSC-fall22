@@ -778,31 +778,48 @@ each time, because the number of outcomes is finite, so if we run it enough time
 it will return the same result at some point.}
 Not being able to replicate error makes it really hard to debug. If some thread 
 reaches desired variable first depends on, how the operating system schedules threads. \\
-To prevent race-condition it's necessary to allow exclusive access to the shared content.
-For this there is a semaphore. Semaphore is just
-one global variable, that is used by threads to communicate, if they can continue (go
-though crossroad) or not. Before the thread reaches the critical part of the code
-(manipulating with shared content),
-we can let it wait for a signal to continue from the semaphor. The global variable representing
-semaphore is just a non-negative integer. If the thread reaches this part
-of code, it decrements the value of semaphore and constantly
-checks the variable until it is non-zero. If the variable is not zero, it means green light
-for the thread, so it can access the critical section and run it. When leaving the critical section 
-the thread increments the value of the semaphor variable, to give a signal to other threads, 
-saying that next 
-one can access the critical section. But to be precise there is no rule saying, that this
-variable has to be incremented by the same thread that is accessing the critical area. The threads
-waiting are waiting for a signal for any other thread, not necessary the last one, that has accessed
-the critical section. So we can have a thread that is incrementing the semaphore and allowing
-other threads access shared content. So we can have more threads accessing the shared content. 
-If we don't want this behaviour, there is a special type of a sempahore called
-mutex (mutual exclusion), where one thread gets access to the shared resource and only that thread
-can release (increment the semaphore variable) it. Meaning other threads are waiting for 
-the thread having the resource to tell them, that it's ok to continue.
-\\
-While waiting thread actively checks the semaphore variable every time it gets the chance. This 
-requires computational power and is a reason, why it is so expensive, because you need to run 
-instructions just for the checking the variable.
+To prevent race-condition it's necessary to allow exclusive access to the shared content. \\
+On the instruction level we need something called atomic operations. Atomic operations are
+executed sequentially. Let's look at normal instructions, for example ADD. ADD instruction 
+first needs to load value from memory to register, then increment it by a value and in the 
+end store it back to the memory. This process can be interupted by some other thread and 
+that thread can execute one or more instructions between loading value from memory and 
+incrementing it. That's the place where race condition can happen, if the other thread
+manipulates with same value. If the ADD was atomic instruction, the load, increment and store
+would be executed right in this order and the process couldn't be interupted by other thread.
+In the x86 instruction set there are couple atomic instructions, for example \textit{test and
+set}. This instruction loads old value from the memory, sets that memory to a new value and
+returns the old value. We can use this instruction to implement simple mutual exclusion locks.
+What could these locks be good for? When thread comes to critical section, where it manipulates
+with shared variable, it can first call lock and then held it. No other thread will be able
+to access that variable, until the first thread releases the lock. How could this be
+implemented? We can have some variable set to 0 and two methods. First method is called lock.
+Lock should be called when the thread is going in the critical section. Lock tries to set
+the value of that variable to 1. If the set was successfull, meaning the value returned 
+from \textit{test and set} was 0, method returns and the thread can continue executing code.
+Otherwise if the returned value was 1, it means that some other thread is curently in the
+critical section. In this case we can let the thread spin in the loop, until
+the set is successfull. This ensures that no other thread will be able to access critical
+section. When the thread is leaving critical section it should somehow signal, that
+someone else can access that section. That's what the second method is good for. Let's call
+it unlock. Unlock just sets that variable to 0 and returns. This allows some other thread
+to \textit{test and set} that variable to 1, while the condition will be evaluated as leave
+the loop, so the thread can continue. Here we can see one more thing. Lock implemented 
+like this will be expensive. When multiple thread are waiting for the access, they spin
+and check some variable. This requires a lot of computing power and basically doesn't do much.
+Usually the CPU will have to execute more instructions, compared to case, when it ingnores 
+race conditions. \\
+Other atomic instructions in x86 instruction set 
+\begin{itemize}
+  \item{Compare and swap $\rightarrow$ Returns false if the value in the memory doesn't equal
+    to a specified old value, otherwise it sets that value in the memory to a new specified value
+    and return true}
+  \item{Fetch and add $\rightarrow$ Loads the old value, increments the old value by a specified 
+    value and returns the old value}
+\end{itemize}
+
+\noindent Both instructions can be used to implement lock, that is very similar to the lock described 
+above.
 
 \newpage
 \printbibliography
