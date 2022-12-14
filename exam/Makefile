@@ -4,6 +4,7 @@ OBJS = exam_solution.tex
 
 all: $(OBJS)
 	pdflatex $(OBJS)
+	biber $(basename $(OBJS))
 	pdflatex $(OBJS)
 
 cleanup:

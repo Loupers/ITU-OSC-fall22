@@ -12,6 +12,7 @@
 \usepackage{lastpage}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{url}
 
 \usepackage[backend=biber]{biblatex}
 \addbibresource{sample.bib}
@@ -515,7 +516,7 @@ static void *extend_heap(size_t words)
 
 	// Initialize free block header/footer and the epilogue header
 	PUT(HDRP(bp), PACK(size, 0));
-	PUT(FTRP(bp), PACK(size, 0));
+	PUT(FTRP(bp), PACK(siz\usepackage{url}e, 0));
 	// last block is of size 0
 	PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));
 	// merge if last block was free
@@ -819,7 +820,7 @@ Other atomic instructions in x86 instruction set
 \end{itemize}
 
 \noindent Both instructions can be used to implement lock, that is very similar to the lock described 
-above.
+above.\cite{c2}
 
 \newpage
 \printbibliography
